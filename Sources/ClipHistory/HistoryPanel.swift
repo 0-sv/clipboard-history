@@ -3,6 +3,7 @@ import SwiftUI
 
 final class HistoryPanel: NSPanel {
     var onKey: ((NSEvent) -> Bool)?
+    var hidesOnResignKey = true
 
     init(rootView: some View) {
         super.init(
@@ -42,7 +43,7 @@ final class HistoryPanel: NSPanel {
 
     override func resignKey() {
         super.resignKey()
-        orderOut(nil)
+        if hidesOnResignKey { orderOut(nil) }
     }
 
     override func sendEvent(_ event: NSEvent) {

@@ -2,11 +2,13 @@
 
 A menu bar app for macOS that keeps an unlimited clipboard history. It stores text, images, and file references in a local SQLite database and never deletes them by age or count.
 
+<img src="docs/screenshot.png" alt="The ClipHistory search panel with a list of entries and a preview of the selected entry" width="780">
+
 ## Use
 
 | Key | Action |
 |---|---|
-| ⇧⌘V | Open or close the history |
+| ⌥V | Open or close the history |
 | Type | Search (substring match, not case-sensitive) |
 | ↑ / ↓ | Move the selection |
 | ↩ | Paste the selected item into the front app |

@@ -12,8 +12,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     private var statusItem: NSStatusItem!
 
     func applicationDidFinishLaunching(_ notification: Notification) {
+        // Demo mode shows the panel on a separate data directory and captures nothing. The README screenshot uses it.
+        let demoDirectory = ProcessInfo.processInfo.environment["CLIPHISTORY_DEMO_DIR"]
         do {
-            let support = try FileManager.default
+            let support = try demoDirectory.map { URL(fileURLWithPath: $0) } ?? FileManager.default
                 .url(for: .applicationSupportDirectory, in: .userDomainMask, appropriateFor: nil, create: true)
                 .appendingPathComponent("ClipHistory")
             let images = support.appendingPathComponent("images")
@@ -34,13 +36,21 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         panel = HistoryPanel(rootView: HistoryView(model: model))
         panel.onKey = { [weak self] in self?.model.handleKey($0) ?? false }
 
+        if demoDirectory != nil {
+            panel.hidesOnResignKey = false
+            model.onPaste = nil
+            model.prepareForDisplay()
+            panel.show()
+            return
+        }
+
         monitor.onCapture = { [weak self] in
             guard let self, self.panel.isVisible else { return }
             self.model.reload(keepSelection: true)
         }
         monitor.start()
 
-        hotKey = HotKey(keyCode: kVK_ANSI_V, modifiers: cmdKey | shiftKey) { [weak self] in
+        hotKey = HotKey(keyCode: kVK_ANSI_V, modifiers: optionKey) { [weak self] in
             self?.togglePanel()
         }
 
@@ -53,7 +63,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         statusItem.menu = menu
 
         if hotKey == nil {
-            alert("ClipHistory cannot register ⇧⌘V.", detail: "Another app uses this shortcut. Open the history from the menu bar icon.")
+            alert("ClipHistory cannot register ⌥V.", detail: "Another app uses this shortcut. Open the history from the menu bar icon.")
         }
         // The prompt appears only while the permission is missing.
         AXIsProcessTrustedWithOptions([kAXTrustedCheckOptionPrompt.takeUnretainedValue() as String: true] as CFDictionary)
@@ -66,7 +76,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         menu.addItem(.separator())
 
         let open = menu.addItem(withTitle: "Open History", action: #selector(togglePanel), keyEquivalent: "v")
-        open.keyEquivalentModifierMask = [.command, .shift]
+        open.keyEquivalentModifierMask = [.option]
 
         let pause = menu.addItem(withTitle: "Pause Capture", action: #selector(togglePause), keyEquivalent: "")
         pause.state = monitor.isPaused ? .on : .off
